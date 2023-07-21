@@ -10,10 +10,11 @@ import (
 )
 
 type Conf struct {
-	IPAddr   string `yaml:"IP_Address"`
-	Port     string `yaml:"Port"`
-	Crt_path string `yaml:"Crt_path"`
-	Key_path string `yaml:"Key_path"`
+	IPAddr  string `yaml:"IP_Address"`
+	DN      string `yaml:"DN"`
+	Port    string `yaml:"Port"`
+	CrtPath string `yaml:"Crt_path"`
+	KeyPath string `yaml:"Key_path"`
 }
 
 func Parse_conf(yml_path string) Conf {
@@ -50,12 +51,16 @@ func CheckField(conf Conf) {
 		fmt.Println("Port field is empty")
 		is_empty = true
 	}
-	if conf.Crt_path == "" {
+	if conf.CrtPath == "" {
 		fmt.Println("Crt_path field is empty")
 		is_empty = true
 	}
-	if conf.Key_path == "" {
+	if conf.KeyPath == "" {
 		fmt.Println("Key_path field is empty")
+		is_empty = true
+	}
+	if conf.DN == "" {
+		fmt.Println("DN field is empty")
 		is_empty = true
 	}
 	if is_empty == true {

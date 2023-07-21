@@ -1,4 +1,5 @@
-IP_Address: 
+IP_Address: x.x.x.x
+DN: exemple.com
 Port: 8080
-Crt_path: "server.crt"
-Key_path: "server.key"
+Crt_path:
+Key_path: 

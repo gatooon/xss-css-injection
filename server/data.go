@@ -1,10 +1,10 @@
 package server
 
-var Loop_n int
+var StoredPayload, PayloadEndCheck string
 
 type Setup struct {
-	IP_Address string
-	Port       string
-	Crt_path   string
-	Key_path   string
+	IPAddress string
+	Port      string
+	CrtPath   string
+	KeyPath   string
 }
