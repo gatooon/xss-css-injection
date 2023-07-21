@@ -42,19 +42,20 @@ func catch(writer http.ResponseWriter, request *http.Request, chl chan [2]string
 		Loop(writer, [2]string{"", "endcheck"}, conf.DN, conf.Port)
 	case strings.Contains(request.URL.String(), "/trigger/"):
 		urlExtracted := filepath.Base(request.URL.String())
-		if len(*payloadEndCheck) <= 2 {
+		payloadEndCheckLen := len(*payloadEndCheck) + 1
+
+		if payloadEndCheckLen <= 2 {
 			if len(*payloadEndCheck) <= len(urlExtracted) {
 				*payloadEndCheck = urlExtracted
+				fmt.Println("End with :" + *payloadEndCheck)
 			}
 			if len(*payloadEndCheck) == 2 {
 				chl <- [2]string{"", "classic"}
 			} else {
 				chl <- [2]string{*payloadEndCheck, "endcheck"}
 			}
-			fmt.Println(len(*payloadEndCheck))
-			fmt.Println("End with :" + *payloadEndCheck)
 		} else {
-			if len(*storedPayload) <= len(urlExtracted) {
+			if len(*storedPayload) <= len(urlExtracted) && strings.Contains(urlExtracted, *storedPayload) {
 				*storedPayload = urlExtracted
 			}
 			fmt.Println("Start with :" + *storedPayload)
